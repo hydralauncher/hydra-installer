@@ -1,0 +1,15 @@
+{
+  "title": {
+    "downloading": "Загрузка Hydra",
+    "installing": "Установка Launcher",
+    "default": "Hydra Launcher"
+  },
+  "description": "Нам необходимо загрузить несколько дополнительных компонентов, чтобы обеспечить бесперебойную работу.",
+  "startDownload": "Установить Hydra",
+  "replayAnimation": "Повторить анимацию",
+  "error": "Ошибка",
+  "installing": "Установка...",
+  "deletePreviousInstallation": "Удалить содержимое предыдущих установок",
+  "selectLanguage": "Выбрать язык"
+}
+
