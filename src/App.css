@@ -78,11 +78,29 @@ body {
   justify-content: center;
 }
 
+.logo-container-animated {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 10;
+  pointer-events: none;
+  transform-origin: center center;
+}
+
 .hydra-logo {
-  width: 400px;
-  height: auto;
+  width: 224px;
+  height: 216px;
   filter: drop-shadow(0 0 40px rgba(255, 255, 255, 0.5));
   object-fit: contain;
+  transition: filter 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hydra-logo-focused {
+  filter: blur(0px) drop-shadow(0 0 40px rgba(255, 255, 255, 0.5));
+}
+
+.hydra-logo-blurred {
+  filter: blur(20px) drop-shadow(0 0 40px rgba(255, 255, 255, 0.5));
 }
 
 .download-card-header {
@@ -94,6 +112,23 @@ body {
   position: relative;
   z-index: 2;
   width: 100%;
+}
+
+.download-card-header-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.download-card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 16px;
 }
 
 .download-indicator-container {
