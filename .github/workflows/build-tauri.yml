@@ -37,4 +37,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: |
-            src-tauri/target/release/bundle/
+            src-tauri/target/release/hydra-installer.exe
