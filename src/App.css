@@ -269,6 +269,7 @@ body {
   margin: 0;
   cursor: pointer;
   -webkit-app-region: no-drag;
+  line-height: 1;
 }
 
 .custom-checkbox {
@@ -276,6 +277,9 @@ body {
   width: 20px;
   height: 20px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .custom-checkbox input[type="checkbox"] {
@@ -332,6 +336,9 @@ body {
 
 .delete-previous-checkbox span {
   user-select: none;
+  line-height: 1;
+  display: flex;
+  align-items: center;
 }
 
 .download-error-message {

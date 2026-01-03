@@ -1,6 +1,6 @@
 .language-selector {
   position: fixed;
-  bottom: 20px;
+  top: 20px;
   left: 20px;
   z-index: 1000;
   -webkit-app-region: no-drag;
@@ -10,22 +10,14 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
+  padding: 0;
+  background: transparent;
+  border: none;
   color: white;
   font-family: 'Space Grotesk', sans-serif;
   font-size: 14px;
   font-weight: 500;
-  cursor: pointer;
-  transition: all 0.25s;
-  backdrop-filter: blur(10px);
-}
-
-.language-selector-button:hover {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.5);
+  cursor: default;
 }
 
 .language-globe {
@@ -39,9 +31,16 @@
   font-weight: 500;
 }
 
+.language-arrow {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: currentColor;
+}
+
 .language-dropdown {
   position: absolute;
-  bottom: calc(100% + 8px);
+  top: calc(100% + 8px);
   left: 0;
   display: flex;
   flex-direction: column;

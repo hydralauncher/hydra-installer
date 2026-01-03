@@ -21,6 +21,13 @@ async fn exit_app(app: AppHandle) {
 }
 
 #[tauri::command]
+async fn minimize_window(window: Window) {
+    if let Some(webview_window) = window.get_webview_window("main") {
+        let _ = webview_window.minimize();
+    }
+}
+
+#[tauri::command]
 async fn check_previous_installation() -> Result<bool, String> {
     let home_dir = dirs::home_dir().ok_or("Failed to get home directory")?;
 
@@ -30,6 +37,97 @@ async fn check_previous_installation() -> Result<bool, String> {
     hydra_path.push("hydralauncher");
 
     Ok(hydra_path.exists() && hydra_path.is_dir())
+}
+
+#[tauri::command]
+async fn get_hydra_installation_path() -> Result<Option<String>, String> {
+    #[cfg(target_os = "windows")]
+    {
+        use winreg::enums::*;
+        use winreg::RegKey;
+
+        let registry_paths = vec![
+            (
+                "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
+                HKEY_LOCAL_MACHINE,
+            ),
+            (
+                "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
+                HKEY_LOCAL_MACHINE,
+            ),
+            (
+                "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
+                HKEY_CURRENT_USER,
+            ),
+        ];
+
+        for (path, hkey) in registry_paths {
+            let hkcu = RegKey::predef(hkey);
+            let uninstall_key = match hkcu.open_subkey(path) {
+                Ok(key) => key,
+                Err(_) => continue,
+            };
+
+            for key_name in uninstall_key.enum_keys().map(|x| x.unwrap()) {
+                let subkey = match uninstall_key.open_subkey(&key_name) {
+                    Ok(key) => key,
+                    Err(_) => continue,
+                };
+
+                let display_name: String = match subkey.get_value("DisplayName") {
+                    Ok(name) => name,
+                    Err(_) => continue,
+                };
+
+                let publisher: String = match subkey.get_value("Publisher") {
+                    Ok(pub_name) => pub_name,
+                    Err(_) => continue,
+                };
+
+                if display_name == "Hydra" && publisher == "Los Broxas" {
+                    // Try InstallLocation first
+                    if let Ok(install_location) = subkey.get_value::<String, _>("InstallLocation") {
+                        if !install_location.is_empty() {
+                            return Ok(Some(install_location));
+                        }
+                    }
+
+                    // Fallback to UninstallString and extract directory
+                    if let Ok(uninstall_string) = subkey.get_value::<String, _>("UninstallString") {
+                        // UninstallString often has quotes and arguments like: "C:\Path\Uninstall.exe" /S
+                        // Extract just the path part
+                        let uninstall_path = uninstall_string
+                            .trim()
+                            .trim_matches('"')
+                            .split_whitespace()
+                            .next()
+                            .unwrap_or(&uninstall_string);
+                        
+                        if let Some(parent) = std::path::Path::new(uninstall_path).parent() {
+                            let hydra_exe = parent.join("Hydra.exe");
+                            return Ok(Some(hydra_exe.to_string_lossy().to_string()));
+                        }
+                    }
+
+                    // Fallback to DisplayIcon and extract directory
+                    if let Ok(display_icon) = subkey.get_value::<String, _>("DisplayIcon") {
+                        // DisplayIcon might have an index like "C:\Path\file.exe,0"
+                        let icon_path = display_icon.split(',').next().unwrap_or(&display_icon);
+                        if let Some(parent) = std::path::Path::new(icon_path).parent() {
+                            return Ok(Some(parent.to_string_lossy().to_string()));
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(None)
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        Err("Registry lookup is only supported on Windows".to_string())
+    }
 }
 
 #[tauri::command]
@@ -93,14 +191,12 @@ async fn launch_hydra() -> Result<(), String> {
     {
         use tokio::process::Command;
 
-        let home_dir = dirs::home_dir().ok_or("Failed to get home directory")?;
+        // Get the installation path from the registry
+        let hydra_path_str = get_hydra_installation_path()
+            .await?
+            .ok_or("Hydra installation not found in registry")?;
 
-        let mut hydra_path = home_dir;
-        hydra_path.push("AppData");
-        hydra_path.push("Local");
-        hydra_path.push("Programs");
-        hydra_path.push("Hydra");
-        hydra_path.push("Hydra.exe");
+        let hydra_path = std::path::Path::new(&hydra_path_str);
 
         if !hydra_path.exists() {
             return Err(format!(
@@ -109,7 +205,7 @@ async fn launch_hydra() -> Result<(), String> {
             ));
         }
 
-        Command::new(&hydra_path)
+        Command::new(hydra_path)
             .spawn()
             .map_err(|e| format!("Failed to launch Hydra: {}", e))?;
 
@@ -281,9 +377,11 @@ pub fn run() {
             start_download,
             show_main_window,
             exit_app,
+            minimize_window,
             launch_hydra,
             check_previous_installation,
-            delete_previous_installation
+            delete_previous_installation,
+            get_hydra_installation_path
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

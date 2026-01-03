@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
-import { GlobeAltIcon } from "@heroicons/react/24/outline";
-import "./LanguageSelector.css";
+import { GlobeAltIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
+import "./language-selector.css";
 
 const languages = [
   { code: "en", name: "English", flag: "🇬🇧" },
@@ -15,7 +15,7 @@ interface LanguageSelectorProps {
   visible: boolean;
 }
 
-export default function LanguageSelector({ visible }: LanguageSelectorProps) {
+export default function LanguageSelector({ visible }: Readonly<LanguageSelectorProps>) {
   const { i18n, t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const currentLang = languages.find((lang) => lang.code === i18n.language) || languages[0];
@@ -54,6 +54,8 @@ export default function LanguageSelector({ visible }: LanguageSelectorProps) {
         }
       }}
       ref={dropdownRef}
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={() => setIsOpen(false)}
     >
       <button
         className="language-selector-button"
@@ -62,14 +64,26 @@ export default function LanguageSelector({ visible }: LanguageSelectorProps) {
       >
         <GlobeAltIcon className="language-globe" />
         <span className="language-name-display">{currentLang.name}</span>
+        <motion.div
+          style={{ display: 'flex', alignItems: 'center' }}
+          animate={{
+            rotate: isOpen ? 180 : 0,
+            transition: {
+              duration: 0.2,
+              ease: [0.4, 0, 0.2, 1]
+            }
+          }}
+        >
+          <ChevronDownIcon className="language-arrow" />
+        </motion.div>
       </button>
       <AnimatePresence>
         {isOpen && (
           <motion.div
             className="language-dropdown"
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{
               duration: 0.2,
               ease: [0.4, 0, 0.2, 1]

@@ -1,0 +1,57 @@
+.window-controls {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  gap: 16px;
+  -webkit-app-region: no-drag;
+}
+
+.window-control-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px !important;
+  margin: 0;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 4px !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: white;
+  cursor: default !important;
+  font-size: inherit;
+  font-weight: inherit;
+  font-family: inherit;
+  transition: all 0.2s ease !important;
+  -webkit-app-region: no-drag;
+  opacity: 0.8;
+}
+
+.window-control-button:hover {
+  border: none !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: none !important;
+  opacity: 1;
+}
+
+.window-control-button:active {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.window-control-button:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.window-control-icon {
+  width: 18px;
+  height: 18px;
+  color: currentColor;
+}
+

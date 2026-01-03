@@ -4,8 +4,9 @@ import { listen } from "@tauri-apps/api/event";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { CheckIcon } from "@heroicons/react/24/solid";
-import LanguageSelector from "./components/LanguageSelector";
-import "./App.css";
+import LanguageSelector from "./components/language-selector";
+import WindowControls from "./components/window-controls";
+import "./app.css";
 
 interface DownloadProgress {
   downloaded: number;
@@ -343,6 +344,7 @@ function App() {
         </div>
       </main>
       <LanguageSelector visible={contentVisible} />
+      <WindowControls visible={contentVisible} />
     </>
   );
 }
