@@ -102,7 +102,7 @@ async fn get_hydra_installation_path() -> Result<Option<String>, String> {
                             .split_whitespace()
                             .next()
                             .unwrap_or(&uninstall_string);
-                        
+
                         if let Some(parent) = std::path::Path::new(uninstall_path).parent() {
                             let hydra_exe = parent.join("Hydra.exe");
                             return Ok(Some(hydra_exe.to_string_lossy().to_string()));
