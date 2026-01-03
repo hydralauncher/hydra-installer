@@ -220,10 +220,10 @@ async fn launch_hydra() -> Result<(), String> {
 
 #[tauri::command]
 async fn start_download(window: Window, url: String) -> Result<(), String> {
-    let download_dir = dirs::download_dir().ok_or("Failed to get Downloads directory")?;
+    let temp_dir = std::env::temp_dir();
 
     let filename = url.split('/').last().unwrap_or("downloaded_file.exe");
-    let file_path = download_dir.join(filename);
+    let file_path = temp_dir.join(filename);
 
     let response = reqwest::get(url)
         .await
@@ -334,6 +334,11 @@ async fn start_download(window: Window, url: String) -> Result<(), String> {
                     .map_err(|e| format!("Failed to wait for installer: {}", e))?;
 
                 if status.success() {
+                    // Delete the setup file after successful installation
+                    if let Err(e) = tokio::fs::remove_file(&file_path).await {
+                        eprintln!("Warning: Failed to delete setup file: {}", e);
+                    }
+                    
                     window
                         .emit("install-complete", &serde_json::json!({ "success": true }))
                         .ok();
