@@ -338,7 +338,7 @@ async fn start_download(window: Window, url: String) -> Result<(), String> {
                     if let Err(e) = tokio::fs::remove_file(&file_path).await {
                         eprintln!("Warning: Failed to delete setup file: {}", e);
                     }
-                    
+
                     window
                         .emit("install-complete", &serde_json::json!({ "success": true }))
                         .ok();
