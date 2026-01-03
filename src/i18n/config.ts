@@ -29,6 +29,7 @@ i18n
     },
     lng: getBrowserLanguage(),
     fallbackLng: 'en',
+    returnObjects: true,
     interpolation: {
       escapeValue: false,
     },

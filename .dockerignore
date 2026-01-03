@@ -1,0 +1,16 @@
+node_modules
+dist
+src-tauri
+target
+.git
+.gitignore
+README.md
+.vscode
+.idea
+*.log
+.DS_Store
+.env
+.env.local
+coverage
+.nyc_output
+

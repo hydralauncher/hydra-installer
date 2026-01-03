@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  hydra-installer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    container_name: hydra-installer-web
+    restart: unless-stopped
+

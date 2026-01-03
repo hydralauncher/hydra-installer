@@ -23,6 +23,9 @@ importers:
       i18next:
         specifier: ^23.16.8
         version: 23.16.8
+      ky:
+        specifier: ^1.7.3
+        version: 1.14.2
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -1231,6 +1234,10 @@ packages:
 
   keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
+
+  ky@1.14.2:
+    resolution: {integrity: sha512-q3RBbsO5A5zrPhB6CaCS8ZUv+NWCXv6JJT4Em0i264G9W0fdPB8YRfnnEi7Dm7X7omAkBIPojzYJ2D1oHTHqug==}
+    engines: {node: '>=18'}
 
   lefthook-darwin-arm64@2.0.13:
     resolution: {integrity: sha512-KbQqpNSNTugjtPzt97CNcy/XZy5asJ0+uSLoHc4ML8UCJdsXKYJGozJHNwAd0Xfci/rQlj82A7rPOuTdh0jY0Q==}
@@ -2948,6 +2955,8 @@ snapshots:
   keyv@4.5.4:
     dependencies:
       json-buffer: 3.0.1
+
+  ky@1.14.2: {}
 
   lefthook-darwin-arm64@2.0.13:
     optional: true

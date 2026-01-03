@@ -4,6 +4,7 @@ import { listen } from "@tauri-apps/api/event";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { CheckIcon } from "@heroicons/react/24/solid";
+import ky from "ky";
 import LanguageSelector from "./components/language-selector";
 import WindowControls from "./components/window-controls";
 import "./app.css";
@@ -19,13 +20,65 @@ interface DownloadComplete {
   total?: number;
 }
 
+interface ReleaseAsset {
+  id: number;
+  name: string;
+  browserDownloadUrl: string;
+}
+
+interface LatestRelease {
+  tagName: string;
+  assets: ReleaseAsset[];
+}
+
+interface StatsResponse {
+  usersOnline: number;
+  achievementCount: number;
+  totalPlayTimeInHours: number;
+  gameCount: number;
+  userPlayingCount: number;
+  userCount: number;
+  githHubStargazes: number;
+  latestRelease: LatestRelease;
+}
+
 const ANIMATION_TIMINGS = {
   LOGO_FOCUS: 100,
   LOGO_MINIMIZE: 1600,
   CONTENT_VISIBLE: 2500,
 } as const;
 
-const DOWNLOAD_URL = "https://github.com/hydralauncher/hydra/releases/download/v3.7.6/hydralauncher-3.7.6-setup.exe";
+const STATS_API_URL = "https://hydra-api-us-east-1.losbroxas.org/stats";
+
+async function fetchLatestDownloadUrl(): Promise<string> {
+  try {
+    const response = await ky.get(STATS_API_URL).json<StatsResponse>();
+    const setupAsset = response.latestRelease.assets.find((asset) =>
+      asset.name.endsWith("-setup.exe")
+    );
+
+    if (!setupAsset) {
+      throw new Error("Setup executable not found in latest release assets");
+    }
+
+    return setupAsset.browserDownloadUrl;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Failed to fetch latest version: ${error.message}`);
+    }
+    throw new Error("Failed to fetch latest version: Unknown error");
+  }
+}
+
+async function fetchVersion(): Promise<string | null> {
+  try {
+    const response = await ky.get(STATS_API_URL).json<StatsResponse>();
+    return response.latestRelease.tagName;
+  } catch (error) {
+    console.error("Failed to fetch version:", error);
+    return null;
+  }
+}
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -73,6 +126,8 @@ function App() {
   const [contentVisible, setContentVisible] = useState(false);
   const [hasPreviousInstallation, setHasPreviousInstallation] = useState(false);
   const [deletePreviousInstallation, setDeletePreviousInstallation] = useState(false);
+  const [version, setVersion] = useState<string | null>(null);
+  const [installingMessageIndex, setInstallingMessageIndex] = useState(0);
 
   async function startDownload() {
     try {
@@ -86,7 +141,9 @@ function App() {
       setDownloaded(0);
       setTotalSize(null);
       setError(null);
-      await invoke("start_download", { url: DOWNLOAD_URL });
+      
+      const downloadUrl = await fetchLatestDownloadUrl();
+      await invoke("start_download", { url: downloadUrl });
     } catch (err) {
       setError(err as string);
       setDownloading(false);
@@ -128,6 +185,97 @@ function App() {
   }, []);
 
   useEffect(() => {
+    async function loadVersion() {
+      const versionTag = await fetchVersion();
+      if (versionTag) {
+        const versionNumber = versionTag.startsWith("v") ? versionTag.slice(1) : versionTag;
+        setVersion(versionNumber);
+      }
+    }
+    loadVersion();
+  }, []);
+
+  useEffect(() => {
+    if (!installing) {
+      return;
+    }
+
+    setProgress(95);
+
+    const startTime = performance.now();
+    const duration = 30000;
+    const startProgress = 95;
+    const endProgress = 100;
+
+    let animationFrameId: number;
+
+    function animate(currentTime: number) {
+      const elapsed = currentTime - startTime;
+      const progressRatio = Math.min(elapsed / duration, 1);
+
+      const easedProgress = 1 - Math.pow(1 - progressRatio, 3);
+
+      const currentProgress = startProgress + (endProgress - startProgress) * easedProgress;
+      setProgress(currentProgress);
+
+      if (progressRatio < 1 && installing) {
+        animationFrameId = requestAnimationFrame(animate);
+      }
+    }
+
+    animationFrameId = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [installing]);
+
+  useEffect(() => {
+    if (!installing) {
+      return;
+    }
+
+    setInstallingMessageIndex(0);
+
+    const installingMessages = t("installing", { returnObjects: true }) as string[];
+    if (!Array.isArray(installingMessages) || installingMessages.length === 0) {
+      return;
+    }
+
+    const minDuration = 5000;
+    const maxRandomAddition = 3000;
+    let currentIndex = 0;
+    let messageStartTime = performance.now();
+    let currentMessageDuration = minDuration + Math.random() * maxRandomAddition;
+    let animationFrameId: number;
+
+    function animate(currentTime: number) {
+      const elapsed = currentTime - messageStartTime;
+      
+      if (elapsed >= currentMessageDuration) {
+        currentIndex = (currentIndex + 1) % installingMessages.length;
+        setInstallingMessageIndex(currentIndex);
+        messageStartTime = currentTime;
+        currentMessageDuration = minDuration + Math.random() * maxRandomAddition;
+      }
+
+      if (installing) {
+        animationFrameId = requestAnimationFrame(animate);
+      }
+    }
+
+    animationFrameId = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [installing, t]);
+
+  useEffect(() => {
     const unlistenProgress = listen<DownloadProgress>("download-progress", (event) => {
       const progressData = event.payload;
       if (progressData.percentage >= 0) {
@@ -149,6 +297,7 @@ function App() {
     });
 
     const unlistenInstallComplete = listen("install-complete", async () => {
+      setProgress(100);
       setInstallationComplete(true);
       
       try {
@@ -262,6 +411,11 @@ function App() {
                     ? t("title.downloading") 
                     : t("title.default")}
               </h1>
+              {version && (
+                <div className="download-version">
+                  Ver. {version}
+                </div>
+              )}
               <p className="download-description">
                 {t("description")}
               </p>
@@ -282,20 +436,18 @@ function App() {
             {downloading || installing ? (
               <div className="download-progress-section">
                 <div className="download-progress-bar">
-                  {installing ? (
-                    <div className="download-progress-fill-indeterminate" />
-                  ) : (
-                    <div
-                      className="download-progress-fill"
-                      style={{ width: `${progress}%` }}
-                    />
-                  )}
+                  <div
+                    className="download-progress-fill"
+                    style={{ width: `${progress}%` }}
+                  />
                 </div>
                 <div className="download-progress-info">
                   {installing ? (
                     <>
-                      <span className="download-progress-percentage">—</span>
-                      <span className="download-progress-size">{t("installing")}</span>
+                      <span className="download-progress-percentage">{Math.round(progress)}%</span>
+                      <span className="download-progress-size">
+                        {(t("installing", { returnObjects: true }) as string[])[installingMessageIndex] || ""}
+                      </span>
                     </>
                   ) : (
                     <>

@@ -1,14 +1,19 @@
 {
   "title": {
     "downloading": "Downloading Hydra",
-    "installing": "Installing Launcher",
+    "installing": "Installing Hydra",
     "default": "Hydra Launcher"
   },
   "description": "We need to download a few additional components to ensure everything runs smoothly.",
   "startDownload": "Install Hydra",
   "replayAnimation": "Replay Animation",
   "error": "Error",
-  "installing": "Installing...",
+  "installing": [
+    "Installing components...",
+    "Configuring settings...",
+    "Setting up Hydra...",
+    "Almost there..."
+  ],
   "deletePreviousInstallation": "Delete content from previous installations",
   "selectLanguage": "Select language"
 }

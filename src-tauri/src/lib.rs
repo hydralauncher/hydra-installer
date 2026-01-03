@@ -85,33 +85,33 @@ async fn get_hydra_installation_path() -> Result<Option<String>, String> {
                 };
 
                 if display_name == "Hydra" && publisher == "Los Broxas" {
-                    // Try InstallLocation first
                     if let Ok(install_location) = subkey.get_value::<String, _>("InstallLocation") {
                         if !install_location.is_empty() {
                             return Ok(Some(install_location));
                         }
                     }
 
-                    // Fallback to UninstallString and extract directory
                     if let Ok(uninstall_string) = subkey.get_value::<String, _>("UninstallString") {
-                        // UninstallString often has quotes and arguments like: "C:\Path\Uninstall.exe" /S
-                        // Extract just the path part
-                        let uninstall_path = uninstall_string
-                            .trim()
-                            .trim_matches('"')
-                            .split_whitespace()
-                            .next()
-                            .unwrap_or(&uninstall_string);
+                        let uninstall_path = {
+                            let trimmed = uninstall_string.trim();
+                            if trimmed.starts_with('"') {
+                                if let Some(end_quote) = trimmed[1..].find('"') {
+                                    trimmed[1..end_quote + 1].to_string()
+                                } else {
+                                    trimmed.trim_matches('"').split_whitespace().next().unwrap_or(trimmed).to_string()
+                                }
+                            } else {
+                                trimmed.split_whitespace().next().unwrap_or(trimmed).to_string()
+                            }
+                        };
 
-                        if let Some(parent) = std::path::Path::new(uninstall_path).parent() {
+                        if let Some(parent) = std::path::Path::new(&uninstall_path).parent() {
                             let hydra_exe = parent.join("Hydra.exe");
                             return Ok(Some(hydra_exe.to_string_lossy().to_string()));
                         }
                     }
 
-                    // Fallback to DisplayIcon and extract directory
                     if let Ok(display_icon) = subkey.get_value::<String, _>("DisplayIcon") {
-                        // DisplayIcon might have an index like "C:\Path\file.exe,0"
                         let icon_path = display_icon.split(',').next().unwrap_or(&display_icon);
                         if let Some(parent) = std::path::Path::new(icon_path).parent() {
                             return Ok(Some(parent.to_string_lossy().to_string()));
@@ -168,7 +168,7 @@ async fn kill_hydra_process() -> Result<(), String> {
 async fn delete_previous_installation() -> Result<(), String> {
     kill_hydra_process().await?;
 
-    tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+                        tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
 
     let home_dir = dirs::home_dir().ok_or("Failed to get home directory")?;
 
@@ -189,9 +189,9 @@ async fn delete_previous_installation() -> Result<(), String> {
 async fn launch_hydra() -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
-        use tokio::process::Command;
+        use std::os::windows::process::CommandExt;
+        use std::process::Command;
 
-        // Get the installation path from the registry
         let hydra_path_str = get_hydra_installation_path()
             .await?
             .ok_or("Hydra installation not found in registry")?;
@@ -205,7 +205,13 @@ async fn launch_hydra() -> Result<(), String> {
             ));
         }
 
+        const CREATE_NEW_PROCESS_GROUP: u32 = 0x00000200;
+
         Command::new(hydra_path)
+            .creation_flags(CREATE_NEW_PROCESS_GROUP)
+            .stdin(std::process::Stdio::null())
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
             .spawn()
             .map_err(|e| format!("Failed to launch Hydra: {}", e))?;
 
@@ -334,7 +340,6 @@ async fn start_download(window: Window, url: String) -> Result<(), String> {
                     .map_err(|e| format!("Failed to wait for installer: {}", e))?;
 
                 if status.success() {
-                    // Delete the setup file after successful installation
                     if let Err(e) = tokio::fs::remove_file(&file_path).await {
                         eprintln!("Warning: Failed to delete setup file: {}", e);
                     }
