@@ -98,10 +98,19 @@ async fn get_hydra_installation_path() -> Result<Option<String>, String> {
                                 if let Some(end_quote) = trimmed[1..].find('"') {
                                     trimmed[1..end_quote + 1].to_string()
                                 } else {
-                                    trimmed.trim_matches('"').split_whitespace().next().unwrap_or(trimmed).to_string()
+                                    trimmed
+                                        .trim_matches('"')
+                                        .split_whitespace()
+                                        .next()
+                                        .unwrap_or(trimmed)
+                                        .to_string()
                                 }
                             } else {
-                                trimmed.split_whitespace().next().unwrap_or(trimmed).to_string()
+                                trimmed
+                                    .split_whitespace()
+                                    .next()
+                                    .unwrap_or(trimmed)
+                                    .to_string()
                             }
                         };
 
@@ -168,7 +177,7 @@ async fn kill_hydra_process() -> Result<(), String> {
 async fn delete_previous_installation() -> Result<(), String> {
     kill_hydra_process().await?;
 
-                        tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
+    tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
 
     let home_dir = dirs::home_dir().ok_or("Failed to get home directory")?;
 
