@@ -1,0 +1,15 @@
+pre-commit:
+  parallel: true
+  jobs:
+    - name: lint
+      tags:
+        - frontend
+      glob: "*.{ts,tsx,js,jsx}"
+      run: pnpm lint
+
+    - name: rustfmt
+      tags:
+        - backend
+        - rust
+      glob: "*.rs"
+      run: cargo fmt --manifest-path src-tauri/Cargo.toml

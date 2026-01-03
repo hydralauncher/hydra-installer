@@ -6,7 +6,8 @@ import ru from './locales/ru.json';
 import es from './locales/es.json';
 
 const getBrowserLanguage = (): string => {
-  const lang = navigator.language || (navigator as any).userLanguage;
+  const nav = navigator as Navigator & { userLanguage?: string };
+  const lang = navigator.language || nav.userLanguage || 'en';
   const langCode = lang.split('-')[0].toLowerCase();
   
   const supportedLanguages = ['en', 'pt', 'ru', 'es'];
