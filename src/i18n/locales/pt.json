@@ -1,19 +1,15 @@
 {
   "title": {
     "downloading": "Baixando Hydra",
-    "installing": "Instalando Hydra",
+    "ready": "Pronto para Instalar",
     "default": "Hydra Launcher"
   },
   "description": "Precisamos baixar alguns componentes adicionais para garantir que tudo funcione perfeitamente.",
   "startDownload": "Instalar Hydra",
+  "runInstaller": "Executar Instalador",
+  "downloadCompleteMessage": "Download completo! Clique abaixo para executar o instalador.",
   "replayAnimation": "Repetir Animação",
   "error": "Erro",
-  "installing": [
-    "Instalando componentes...",
-    "Configurando ajustes...",
-    "Configurando Hydra...",
-    "Quase lá..."
-  ],
   "deletePreviousInstallation": "Excluir conteúdo de instalações anteriores",
   "selectLanguage": "Selecionar idioma"
 }

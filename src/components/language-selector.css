@@ -4,6 +4,8 @@
   left: 20px;
   z-index: 1000;
   -webkit-app-region: no-drag;
+  display: flex;
+  flex-direction: column;
 }
 
 .language-selector-button {
@@ -42,7 +44,7 @@
   position: absolute;
   top: 100%;
   left: 0;
-  margin-top: 6px;
+  margin-top: 4px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -53,16 +55,6 @@
   min-width: 180px;
   backdrop-filter: blur(10px);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-}
-
-.language-dropdown::before {
-  content: '';
-  position: absolute;
-  top: -6px;
-  left: -8px;
-  right: -8px;
-  height: 6px;
-  background: transparent;
 }
 
 .language-option {

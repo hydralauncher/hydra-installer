@@ -140,45 +140,7 @@ async fn get_hydra_installation_path() -> Result<Option<String>, String> {
 }
 
 #[tauri::command]
-async fn kill_hydra_process() -> Result<(), String> {
-    #[cfg(target_os = "windows")]
-    {
-        use tokio::process::Command;
-
-        let output = Command::new("taskkill")
-            .args(&["/F", "/IM", "Hydra.exe", "/T"])
-            .output()
-            .await;
-
-        match output {
-            Ok(result) => {
-                if result.status.success() || result.status.code() == Some(128) {
-                    Ok(())
-                } else {
-                    let stderr = String::from_utf8_lossy(&result.stderr);
-                    if stderr.contains("not found") || stderr.contains("not running") {
-                        Ok(())
-                    } else {
-                        Err(format!("Failed to kill Hydra process: {}", stderr))
-                    }
-                }
-            }
-            Err(e) => Err(format!("Failed to execute taskkill: {}", e)),
-        }
-    }
-
-    #[cfg(not(target_os = "windows"))]
-    {
-        Err("Killing Hydra process is only supported on Windows".to_string())
-    }
-}
-
-#[tauri::command]
 async fn delete_previous_installation() -> Result<(), String> {
-    kill_hydra_process().await?;
-
-    tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
-
     let home_dir = dirs::home_dir().ok_or("Failed to get home directory")?;
 
     let mut hydra_path = home_dir;
@@ -187,7 +149,7 @@ async fn delete_previous_installation() -> Result<(), String> {
     hydra_path.push("hydralauncher");
 
     if hydra_path.exists() && hydra_path.is_dir() {
-        std::fs::remove_dir_all(&hydra_path)
+        trash::delete(&hydra_path)
             .map_err(|e| format!("Failed to delete previous installation: {}", e))?;
     }
 
@@ -198,7 +160,6 @@ async fn delete_previous_installation() -> Result<(), String> {
 async fn launch_hydra() -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
-        use std::os::windows::process::CommandExt;
         use std::process::Command;
 
         let hydra_path_str = get_hydra_installation_path()
@@ -214,13 +175,8 @@ async fn launch_hydra() -> Result<(), String> {
             ));
         }
 
-        const CREATE_NEW_PROCESS_GROUP: u32 = 0x00000200;
-
-        Command::new(hydra_path)
-            .creation_flags(CREATE_NEW_PROCESS_GROUP)
-            .stdin(std::process::Stdio::null())
-            .stdout(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null())
+        Command::new("cmd")
+            .args(&["/C", "start", "", &hydra_path_str])
             .spawn()
             .map_err(|e| format!("Failed to launch Hydra: {}", e))?;
 
@@ -333,56 +289,22 @@ async fn start_download(window: Window, url: String) -> Result<(), String> {
         return Err(format!("Failed to emit completion: {}", e));
     }
 
+    Ok(())
+}
+
+#[tauri::command]
+async fn run_installer(installer_path: String) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
-        use tokio::process::Command;
-
-        let installer_path = file_path.to_string_lossy().to_string();
-        let mut cmd = Command::new(installer_path);
-        cmd.args(&["/S", "/NORESTART"]);
-
-        match cmd.spawn() {
-            Ok(mut child) => {
-                let status = child
-                    .wait()
-                    .await
-                    .map_err(|e| format!("Failed to wait for installer: {}", e))?;
-
-                if status.success() {
-                    if let Err(e) = tokio::fs::remove_file(&file_path).await {
-                        eprintln!("Warning: Failed to delete setup file: {}", e);
-                    }
-
-                    window
-                        .emit("install-complete", &serde_json::json!({ "success": true }))
-                        .ok();
-                } else {
-                    let error_msg = format!("Installer exited with code: {:?}", status.code());
-                    window
-                        .emit(
-                            "install-error",
-                            &serde_json::json!({ "error": error_msg.clone() }),
-                        )
-                        .ok();
-                    return Err(error_msg);
-                }
-            }
-            Err(e) => {
-                let error_msg = format!("Failed to start installer: {}", e);
-                window
-                    .emit(
-                        "install-error",
-                        &serde_json::json!({ "error": error_msg.clone() }),
-                    )
-                    .ok();
-                return Err(error_msg);
-            }
-        }
+        std::process::Command::new("cmd")
+            .args(&["/C", "start", "", &installer_path])
+            .spawn()
+            .map_err(|e| format!("Failed to run installer: {}", e))?;
     }
 
     #[cfg(not(target_os = "windows"))]
     {
-        return Err("Installation is only supported on Windows".to_string());
+        return Err("Running installer is only supported on Windows".to_string());
     }
 
     Ok(())
@@ -400,7 +322,8 @@ pub fn run() {
             launch_hydra,
             check_previous_installation,
             delete_previous_installation,
-            get_hydra_installation_path
+            get_hydra_installation_path,
+            run_installer
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -115,8 +115,6 @@ function scheduleAnimation(callbacks: Array<{ time: number; callback: () => void
 function App() {
   const { t } = useTranslation();
   const [downloading, setDownloading] = useState(false);
-  const [installing, setInstalling] = useState(false);
-  const [installationComplete, setInstallationComplete] = useState(false);
   const [progress, setProgress] = useState(0);
   const [downloaded, setDownloaded] = useState(0);
   const [totalSize, setTotalSize] = useState<number | null>(null);
@@ -127,27 +125,24 @@ function App() {
   const [hasPreviousInstallation, setHasPreviousInstallation] = useState(false);
   const [deletePreviousInstallation, setDeletePreviousInstallation] = useState(false);
   const [version, setVersion] = useState<string | null>(null);
-  const [installingMessageIndex, setInstallingMessageIndex] = useState(0);
 
   async function startDownload() {
     try {
       if (deletePreviousInstallation) {
         await invoke("delete_previous_installation");
       }
-      
+
       setDownloading(true);
-      setInstalling(false);
       setProgress(0);
       setDownloaded(0);
       setTotalSize(null);
       setError(null);
-      
+
       const downloadUrl = await fetchLatestDownloadUrl();
       await invoke("start_download", { url: downloadUrl });
     } catch (err) {
       setError(err as string);
       setDownloading(false);
-      setInstalling(false);
     }
   }
 
@@ -196,86 +191,6 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!installing) {
-      return;
-    }
-
-    setProgress(95);
-
-    const startTime = performance.now();
-    const duration = 30000;
-    const startProgress = 95;
-    const endProgress = 100;
-
-    let animationFrameId: number;
-
-    function animate(currentTime: number) {
-      const elapsed = currentTime - startTime;
-      const progressRatio = Math.min(elapsed / duration, 1);
-
-      const easedProgress = 1 - Math.pow(1 - progressRatio, 3);
-
-      const currentProgress = startProgress + (endProgress - startProgress) * easedProgress;
-      setProgress(currentProgress);
-
-      if (progressRatio < 1 && installing) {
-        animationFrameId = requestAnimationFrame(animate);
-      }
-    }
-
-    animationFrameId = requestAnimationFrame(animate);
-
-    return () => {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
-    };
-  }, [installing]);
-
-  useEffect(() => {
-    if (!installing) {
-      return;
-    }
-
-    setInstallingMessageIndex(0);
-
-    const installingMessages = t("installing", { returnObjects: true }) as string[];
-    if (!Array.isArray(installingMessages) || installingMessages.length === 0) {
-      return;
-    }
-
-    const minDuration = 5000;
-    const maxRandomAddition = 3000;
-    let currentIndex = 0;
-    let messageStartTime = performance.now();
-    let currentMessageDuration = minDuration + Math.random() * maxRandomAddition;
-    let animationFrameId: number;
-
-    function animate(currentTime: number) {
-      const elapsed = currentTime - messageStartTime;
-      
-      if (elapsed >= currentMessageDuration) {
-        currentIndex = (currentIndex + 1) % installingMessages.length;
-        setInstallingMessageIndex(currentIndex);
-        messageStartTime = currentTime;
-        currentMessageDuration = minDuration + Math.random() * maxRandomAddition;
-      }
-
-      if (installing) {
-        animationFrameId = requestAnimationFrame(animate);
-      }
-    }
-
-    animationFrameId = requestAnimationFrame(animate);
-
-    return () => {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
-    };
-  }, [installing, t]);
-
-  useEffect(() => {
     const unlistenProgress = listen<DownloadProgress>("download-progress", (event) => {
       const progressData = event.payload;
       if (progressData.percentage >= 0) {
@@ -287,46 +202,27 @@ function App() {
       }
     });
 
-    const unlistenComplete = listen<DownloadComplete>("download-complete", (event) => {
-      setDownloading(false);
-      setProgress(100);
-      setInstalling(true);
-      if (event.payload.total) {
-        setTotalSize(event.payload.total);
-      }
-    });
-
-    const unlistenInstallComplete = listen("install-complete", async () => {
-      setProgress(100);
-      setInstallationComplete(true);
-      
+    const unlistenComplete = listen<DownloadComplete>("download-complete", async (event) => {
       try {
-        await invoke("launch_hydra");
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await invoke("run_installer", { installerPath: event.payload.path });
+        await new Promise(resolve => setTimeout(resolve, 500));
         await invoke("exit_app");
       } catch (err) {
-        console.error("Failed to launch Hydra or exit app:", err);
-        setError(`Failed to launch Hydra: ${err}`);
+        console.error("Failed to run installer:", err);
+        setError(`Failed to run installer: ${err}`);
+        setDownloading(false);
       }
     });
 
     const unlistenError = listen<{ error: string }>("download-error", (event) => {
       setError(event.payload.error);
       setDownloading(false);
-      setInstalling(false);
-    });
-
-    const unlistenInstallError = listen<{ error: string }>("install-error", (event) => {
-      setError(event.payload.error);
-      setInstalling(false);
     });
 
     return () => {
       unlistenProgress.then((unlisten) => unlisten());
       unlistenComplete.then((unlisten) => unlisten());
-      unlistenInstallComplete.then((unlisten) => unlisten());
       unlistenError.then((unlisten) => unlisten());
-      unlistenInstallError.then((unlisten) => unlisten());
     };
   }, []);
 
@@ -400,16 +296,13 @@ function App() {
               }}
             >
               <div className="download-indicator-container">
-                <div className={`step-orb ${!downloading && !installing && !installationComplete ? 'active' : ''}`} />
+                <div className={`step-orb ${!downloading ? 'active' : ''}`} />
                 <div className={`step-orb ${downloading ? 'active' : ''}`} />
-                <div className={`step-orb ${installing || installationComplete ? 'active' : ''}`} />
               </div>
               <h1 className="download-title">
-                {installing 
-                  ? t("title.installing") 
-                  : downloading 
-                    ? t("title.downloading") 
-                    : t("title.default")}
+                {downloading
+                  ? t("title.downloading")
+                  : t("title.default")}
               </h1>
               {version && (
                 <div className="download-version">
@@ -433,7 +326,7 @@ function App() {
               }
             }}
           >
-            {downloading || installing ? (
+            {downloading ? (
               <div className="download-progress-section">
                 <div className="download-progress-bar">
                   <div
@@ -442,21 +335,10 @@ function App() {
                   />
                 </div>
                 <div className="download-progress-info">
-                  {installing ? (
-                    <>
-                      <span className="download-progress-percentage">{Math.round(progress)}%</span>
-                      <span className="download-progress-size">
-                        {(t("installing", { returnObjects: true }) as string[])[installingMessageIndex] || ""}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="download-progress-percentage">{Math.round(progress)}%</span>
-                      <span className="download-progress-size">
-                        {formatBytes(downloaded)} / {totalSize ? formatBytes(totalSize) : '...'}
-                      </span>
-                    </>
-                  )}
+                  <span className="download-progress-percentage">{Math.round(progress)}%</span>
+                  <span className="download-progress-size">
+                    {formatBytes(downloaded)} / {totalSize ? formatBytes(totalSize) : '...'}
+                  </span>
                 </div>
               </div>
             ) : (
