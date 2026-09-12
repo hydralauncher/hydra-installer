@@ -1,0 +1,63 @@
+{
+  "title": {
+    "downloading": "Downloading Hydra",
+    "ready": "Ready to Install",
+    "default": "Hydra Launcher"
+  },
+  "description": "We need to download a few additional components to ensure everything runs smoothly.",
+  "startDownload": "Install Hydra",
+  "runInstaller": "Run Installer",
+  "downloadCompleteMessage": "Download complete! Click below to run the installer.",
+  "replayAnimation": "Replay Animation",
+  "deletePreviousInstallation": "Delete content from previous installations",
+  "selectLanguage": "Select language",
+  "tryAgain": "Try again",
+  "installAnyway": "Install anyway",
+  "errors": {
+    "hydraRunning": {
+      "title": "Hydra is still running",
+      "body": "Close Hydra so the previous installation data can be removed, then try again."
+    },
+    "cleanupFailed": {
+      "title": "Couldn't remove previous data",
+      "body": "The Hydra folder in AppData couldn't be moved to the Recycle Bin. It was left untouched."
+    },
+    "offline": {
+      "title": "No internet connection",
+      "body": "Hydra's servers couldn't be reached. Check your connection and try again."
+    },
+    "unreachable": {
+      "title": "Can't reach Hydra's servers",
+      "body": "The connection timed out. Check your connection or firewall, then try again."
+    },
+    "serverError": {
+      "title": "Hydra's servers had a problem",
+      "body": "The download service returned an error. Wait a few minutes and try again."
+    },
+    "badRelease": {
+      "title": "Couldn't find the latest release",
+      "body": "The release information Hydra received was incomplete. This usually fixes itself in a few minutes."
+    },
+    "interrupted": {
+      "title": "Download interrupted",
+      "body": "The connection dropped at {progress}. The download starts over when you try again."
+    },
+    "diskFull": {
+      "title": "Not enough disk space",
+      "body": "Free up space on your Windows drive, then try again."
+    },
+    "fileError": {
+      "title": "Couldn't save the installer",
+      "body": "Windows blocked writing to your Temp folder. Check your antivirus, then try again."
+    },
+    "launchFailed": {
+      "title": "The installer didn't start",
+      "body": "Windows or your antivirus stopped the installer from opening. Try again and allow it to run."
+    },
+    "unknown": {
+      "title": "Something went wrong",
+      "body": "The installation couldn't continue. Try again. If it keeps happening, the details below help when reporting it."
+    },
+    "progressOf": "{downloaded} of {total}"
+  }
+}

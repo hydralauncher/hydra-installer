@@ -1,0 +1,63 @@
+{
+  "title": {
+    "downloading": "Baixando Hydra",
+    "ready": "Pronto para Instalar",
+    "default": "Hydra Launcher"
+  },
+  "description": "Precisamos baixar alguns componentes adicionais para garantir que tudo funcione perfeitamente.",
+  "startDownload": "Instalar Hydra",
+  "runInstaller": "Executar Instalador",
+  "downloadCompleteMessage": "Download completo! Clique abaixo para executar o instalador.",
+  "replayAnimation": "Repetir Animação",
+  "deletePreviousInstallation": "Excluir conteúdo de instalações anteriores",
+  "selectLanguage": "Selecionar idioma",
+  "tryAgain": "Tentar novamente",
+  "installAnyway": "Instalar mesmo assim",
+  "errors": {
+    "hydraRunning": {
+      "title": "O Hydra ainda está aberto",
+      "body": "Feche o Hydra para que os dados da instalação anterior possam ser removidos e tente novamente."
+    },
+    "cleanupFailed": {
+      "title": "Não foi possível remover os dados anteriores",
+      "body": "A pasta do Hydra em AppData não pôde ser movida para a Lixeira. Ela foi mantida intacta."
+    },
+    "offline": {
+      "title": "Sem conexão com a internet",
+      "body": "Não foi possível alcançar os servidores do Hydra. Verifique sua conexão e tente novamente."
+    },
+    "unreachable": {
+      "title": "Não foi possível alcançar os servidores do Hydra",
+      "body": "A conexão expirou. Verifique sua conexão ou firewall e tente novamente."
+    },
+    "serverError": {
+      "title": "Os servidores do Hydra tiveram um problema",
+      "body": "O serviço de download retornou um erro. Aguarde alguns minutos e tente novamente."
+    },
+    "badRelease": {
+      "title": "Não foi possível encontrar a versão mais recente",
+      "body": "As informações de versão recebidas estavam incompletas. Isso costuma se resolver em alguns minutos."
+    },
+    "interrupted": {
+      "title": "Download interrompido",
+      "body": "A conexão caiu em {progress}. O download recomeça do zero ao tentar novamente."
+    },
+    "diskFull": {
+      "title": "Espaço em disco insuficiente",
+      "body": "Libere espaço na unidade do Windows e tente novamente."
+    },
+    "fileError": {
+      "title": "Não foi possível salvar o instalador",
+      "body": "O Windows bloqueou a gravação na pasta Temp. Verifique seu antivírus e tente novamente."
+    },
+    "launchFailed": {
+      "title": "O instalador não abriu",
+      "body": "O Windows ou seu antivírus impediu o instalador de abrir. Tente novamente e permita a execução."
+    },
+    "unknown": {
+      "title": "Algo deu errado",
+      "body": "A instalação não pôde continuar. Tente novamente. Se persistir, os detalhes abaixo ajudam ao relatar o problema."
+    },
+    "progressOf": "{downloaded} de {total}"
+  }
+}
