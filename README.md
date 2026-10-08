@@ -1,80 +1,54 @@
-# Hydra Installer
+<div align="center">
 
-A single native Windows x64 executable. Rust owns the window and installer state;
-Direct2D/DirectWrite draw the interface on Direct3D 11, with WARP software fallback.
-The executable uses Windows system libraries and requires no separate runtime.
+[<img src="https://raw.githubusercontent.com/hydralauncher/hydra/refs/heads/main/resources/icon.png" width="144"/>](https://github.com/hydralauncher/hydra)
 
-## Build
+  <h1 align="center">Hydra Installer</h1>
 
-On Windows, install stable Rust and Visual Studio C++ Build Tools with the Windows SDK:
+  <p align="center">
+    <strong>The quickest way to get <a href="https://github.com/hydralauncher/hydra">Hydra Launcher</a> on Windows. One small app that downloads the latest Hydra release and starts the setup for you.</strong>
+  </p>
 
-```powershell
-cargo build --release --target x86_64-pc-windows-msvc --locked
-```
+[![build](https://img.shields.io/github/actions/workflow/status/hydralauncher/hydra-installer/build-native.yml)](https://github.com/hydralauncher/hydra-installer/actions)
+[![release](https://img.shields.io/github/v/release/hydralauncher/hydra-installer)](https://github.com/hydralauncher/hydra-installer/releases)
 
-Distribute `target/x86_64-pc-windows-msvc/release/hydra-installer.exe` directly.
-The MSVC CRT is linked statically. CI enforces an executable smaller than 10,000,000
-bytes and publishes the executable for `v*` tags. GNU builds also work with a
-compatible MinGW toolchain; the locally validated GNU release is approximately 5.4 MB.
+<img src="./docs/screenshot.png" alt="Hydra Installer" width="440"/>
 
-## Behavior
+</div>
 
-- The fixed window is 660 × 660 logical pixels and scales per monitor.
-- Video, Space Grotesk, logo, icon and all four translations are embedded.
-- Media Foundation decodes the video. Its DLLs load dynamically: absent codecs or
-  media components use an embedded still with the same color conversion and blur.
-- English, Portuguese, Russian and Spanish follow the Windows user language, with
-  English fallback. The language choice lasts for the current session.
-- Only release discovery and the installer download use the network, through
-  WinHTTP and the system proxy/certificate store. The UI opens offline.
-- Optional cleanup sends the `hydralauncher` folder in Roaming AppData to the
-  Recycle Bin. It does not uninstall the existing Hydra application.
-- Downloads use unique temporary directories and `.part` files. HTTP errors,
-  truncated responses and write errors cannot trigger execution. A completed file
-  is renamed before ShellExecute launches it.
-- Failures come back as a category plus the raw message (`model::Kind`): Hydra still
-  running (a file in the data folder is held open, so the shell aborts the recycle),
-  cleanup failed, offline, unreachable, server error, bad release data, interrupted,
-  disk full, file error, launch failed, or unknown. The description gives way to a
-  panel with an icon, a plain-language explanation from `errors.<kind>` in the
-  locales, and the raw message; the Install button becomes Try again, and cleanup
-  failures add Install anyway, which unticks the cleanup option and starts.
-- Closing during a download hides the window and cancels the worker. The process
-  finishes cleanup when any pending WinHTTP operation returns (30-second I/O timeout).
-  Successfully launched installers stay in their temporary folder for the child.
-- Tab/Shift+Tab navigate; Enter/Space activate; arrows select languages with the
-  menu open; Escape dismisses the menu. Background dragging moves the window.
+## Download
 
-## Verification
+1. Download `hydra-installer.exe` from the [latest release](https://github.com/hydralauncher/hydra-installer/releases/latest).
+2. Run it and click **Install Hydra**.
+
+That's it. The installer finds the newest version of Hydra, downloads it and opens the setup.
+
+Requires Windows 10 or 11 (64-bit).
+
+## Features
+
+- **Always up to date**: downloads the latest Hydra release every time, so you never install an old version
+- **Tiny and self-contained**: a single ~5 MB file, with nothing else to install
+- **Clean reinstall**: optionally move data from a previous Hydra installation to the Recycle Bin before installing, so you can still restore it
+- **Speaks your language**: English, Portuguese, Russian and Spanish, picked from your Windows settings
+- **Helpful errors**: if something goes wrong (no internet, low disk space, Hydra still open), it tells you what happened and how to fix it
+- **Runs anywhere**: works on any PC, even without a dedicated graphics card
+
+## Translations
+
+Want to see the installer in your language? Translations are simple JSON files in [`assets/locales`](assets/locales). See [CONTRIBUTING.md](CONTRIBUTING.md#adding-a-language) for how to add one.
+
+## Build from source and contributing
+
+You need [Rust](https://rustup.rs) and the Visual Studio C++ Build Tools on Windows:
 
 ```powershell
-cargo fmt --check
-cargo clippy --all-targets -- -D warnings
-cargo test --locked
-cargo test decodes_embedded_video -- --ignored
-cargo test live_release_lookup -- --ignored
-rustc tests/fixtures/harmless.rs -o target/harmless.exe
-$env:HYDRA_LAUNCH_FIXTURE = (Resolve-Path target/harmless.exe).Path
-cargo test shell_fixtures -- --ignored
+cargo build --release
 ```
 
-The opt-in shell test recycles only its own disposable temporary directory and
-launches the harmless fixture. Default tests never touch Hydra data or launch
-installers. The network test reads the public release endpoint.
+Everything else, including tests, debug flags and how the code is organized, is in [CONTRIBUTING.md](CONTRIBUTING.md).
 
-`--no-video` forces the still in a normal run; `--software` forces WARP.
-`--preview <state>` renders one state at a fixed animation time without networking:
-`download`, `checkbox`, `checked`, `dropdown`, `error` (Hydra still running) or
-`error-<kind>` with a locale key such as `error-offline`; add `--lang pt`,
-`--time <seconds>` and `--capture out.bmp` to save the frame.
+## Contributors
 
-## Native assets
-
-The SVG and MP4 live in `assets/`. `logo.png` is a 2× rasterization
-of that SVG; `background.png` is the first decoded video frame. The renderer
-converts the SD video's SMPTE-C primaries to match Chromium video compositing.
-Space Grotesk is distributed under the included `assets/fonts/OFL.txt` license.
-
-UI changes ship in a new executable release.
-Rendering lives in `src/render.rs`, window/input code in `src/main.rs`,
-and installer state, networking and media in the adjacent Rust modules.
+<a href="https://github.com/hydralauncher/hydra-installer/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=hydralauncher/hydra-installer" />
+</a>
